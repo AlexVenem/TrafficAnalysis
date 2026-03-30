@@ -14,6 +14,12 @@ from .io_utils import load_features, load_target
 from .model import build_model
 
 
+def clip_target(y: np.ndarray, lower_q: float = 0.01, upper_q: float = 0.99) -> np.ndarray:
+    lower = np.quantile(y, lower_q)
+    upper = np.quantile(y, upper_q)
+    return np.clip(y, lower, upper)
+
+
 def train_model(x_path: str | Path, y_path: str | Path) -> dict[str, float | int]:
     x = load_features(x_path)
     y = load_target(y_path)
@@ -25,10 +31,16 @@ def train_model(x_path: str | Path, y_path: str | Path) -> dict[str, float | int
         random_state=42,
     )
 
-    model = build_model(random_state=42)
-    model.fit(x_train, y_train)
+    y_train_clipped = clip_target(y_train, lower_q=0.01, upper_q=0.99)
 
-    predictions = model.predict(x_test)
+    model = build_model()
+
+    y_train_log = np.log1p(y_train_clipped)
+    model.fit(x_train, y_train_log)
+
+    pred_log = model.predict(x_test)
+    predictions = np.expm1(pred_log)
+    predictions = np.maximum(predictions, 0.0)
 
     metrics: dict[str, float | int] = {
         "mae": float(mean_absolute_error(y_test, predictions)),
@@ -40,7 +52,7 @@ def train_model(x_path: str | Path, y_path: str | Path) -> dict[str, float | int
     }
 
     RESOURCES_DIR.mkdir(parents=True, exist_ok=True)
-    joblib.dump(model, MODEL_PATH)
+    joblib.dump(model, MODEL_PATH, compress=3)
 
     METRICS_PATH.write_text(
         json.dumps(metrics, indent=2, ensure_ascii=False),
@@ -51,7 +63,7 @@ def train_model(x_path: str | Path, y_path: str | Path) -> dict[str, float | int
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Train salary regression model.")
+    parser = argparse.ArgumentParser(description="Train Ridge salary regression model.")
     parser.add_argument("x_path", type=Path, help="Path to x_data.npy")
     parser.add_argument("y_path", type=Path, help="Path to y_data.npy")
     return parser.parse_args()
