@@ -43,9 +43,9 @@ class ExportHandler(Handler):
         assert x_check.shape == ctx.x_data.shape, "Верификация x_data: форма не совпадает"
         assert y_check.shape == ctx.y_data.shape, "Верификация y_data: форма не совпадает"
         assert x_check.dtype == np.float32,        "Верификация x_data: dtype != float32"
-        assert y_check.dtype == np.int32,           "Верификация y_data: dtype != int32"
+        assert y_check.dtype == np.float32,           "Верификация y_data: dtype != float32"
 
         logger.info("✓ x_data.npy  %s  float32  → %s", ctx.x_data.shape, x_path)
-        logger.info("✓ y_data.npy  %s  int32    → %s", ctx.y_data.shape, y_path)
+        logger.info("✓ y_data.npy  %s  float32    → %s", ctx.y_data.shape, y_path)
 
         return ctx

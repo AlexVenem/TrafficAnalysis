@@ -17,7 +17,7 @@ class ScaleHandler(Handler):
 
     Собирает итоговые массивы:
         ctx.x_data : float32 (N, F)
-        ctx.y_data : int32   (N,)
+        ctx.y_data : fgloat
     """
 
     def process(self, ctx: PipelineContext) -> PipelineContext:
@@ -53,7 +53,7 @@ class ScaleHandler(Handler):
             X_parts.append(df[ohe].values.astype(np.float32))
 
         ctx.x_data = np.concatenate(X_parts, axis=1).astype(np.float32)
-        ctx.y_data = df[target_col].values.astype(np.int32)
+        ctx.y_data = df["salary_rub"].values.astype(np.float32)
 
         logger.info(
             "x_data %s float32  |  y_data %s int32",
